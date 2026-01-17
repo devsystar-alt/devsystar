@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}لوحة التحكم - نظام إدارة الأجهزة العسكرية{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>
+            <i class="fas fa-tachometer-alt"></i>
+            لوحة التحكم
+        </h2>
+        <p class="text-muted">مرحباً {{ session.full_name }}، هذه نظرة عامة على النظام</p>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-0">{{ stats.total_devices }}</h3>
+                        <p class="mb-0">إجمالي الأجهزة</p>
+                    </div>
+                    <i class="fas fa-desktop fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-0">{{ stats.active_devices }}</h3>
+                        <p class="mb-0">أجهزة سليمة</p>
+                    </div>
+                    <i class="fas fa-check-circle fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-0">{{ stats.maintenance_devices }}</h3>
+                        <p class="mb-0">قيد الصيانة</p>
+                    </div>
+                    <i class="fas fa-tools fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-0">{{ stats.broken_devices }}</h3>
+                        <p class="mb-0">أجهزة معطلة</p>
+                    </div>
+                    <i class="fas fa-exclamation-triangle fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-bolt"></i> الإجراءات السريعة</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% if permissions | selectattr('اسم_الصلاحية', 'equalto', 'إدارة_الأجهزة') | list %}
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('add_device') }}" class="btn btn-primary w-100">
+                            <i class="fas fa-plus"></i>
+                            إضافة جهاز جديد
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    {% if permissions | selectattr('اسم_الصلاحية', 'equalto', 'عرض_الأجهزة') | list %}
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('devices') }}" class="btn btn-info w-100">
+                            <i class="fas fa-list"></i>
+                            عرض الأجهزة
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    {% if permissions | selectattr('اسم_الصلاحية', 'equalto', 'عرض_التقارير') | list %}
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('reports') }}" class="btn btn-success w-100">
+                            <i class="fas fa-chart-bar"></i>
+                            التقارير
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    {% if permissions | selectattr('اسم_الصلاحية', 'equalto', 'إدارة_المستخدمين') | list %}
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('users') }}" class="btn btn-warning w-100">
+                            <i class="fas fa-users"></i>
+                            إدارة المستخدمين
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Export Options -->
+                <div class="row mt-3 border-top pt-3">
+                    <div class="col-12">
+                        <h6><i class="fas fa-download"></i> خيارات التصدير</h6>
+                    </div>
+                    
+                    {% if permissions | selectattr('اسم_الصلاحية', 'equalto', 'تصدير_البيانات') | list %}
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('export_devices') }}" class="btn btn-success w-100">
+                            <i class="fas fa-file-excel"></i>
+                            تصدير الأجهزة
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    {% if permissions | selectattr('اسم_الصلاحية', 'equalto', 'تصدير_البيانات') | list %}
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('export_database') }}" class="btn btn-danger w-100" 
+                           onclick="return confirm('هل تريد تصدير قاعدة البيانات كاملة؟ قد يستغرق وقتاً طويلاً.')">
+                            <i class="fas fa-database"></i>
+                            تصدير قاعدة البيانات
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activities -->
+{% if permissions | selectattr('اسم_الصلاحية', 'equalto', 'عرض_سجل_الأنشطة') | list %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-history"></i> آخر الأنشطة</h5>
+                <a href="{{ url_for('activity_log') }}" class="btn btn-sm btn-outline-primary">عرض الكل</a>
+            </div>
+            <div class="card-body">
+                {% if stats.recent_activities %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>النشاط</th>
+                                <th>المستخدم</th>
+                                <th>التاريخ</th>
+                                <th>التفاصيل</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for activity in stats.recent_activities %}
+                            <tr>
+                                <td>{{ activity['نوع_النشاط'] }}</td>
+                                <td>{{ activity['الاسم_الكامل'] }}</td>
+                                <td>{{ activity['التاريخ'] }}</td>
+                                <td>{{ activity['التفاصيل'] or '-' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center">لا توجد أنشطة حديثة</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

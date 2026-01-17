@@ -1,0 +1,393 @@
+{% extends "base.html" %}
+
+{% block title %}التقارير - نظام إدارة الأجهزة العسكرية{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>
+            <i class="fas fa-chart-bar"></i>
+            التقارير والإحصائيات
+        </h2>
+        <p class="text-muted">تقارير شاملة حول الأجهزة والأنشطة في النظام</p>
+    </div>
+</div>
+
+<!-- إحصائيات سريعة -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-desktop fa-3x mb-2"></i>
+                <h4>{{ report_data.devices_by_status | sum(attribute='count') }}</h4>
+                <p class="mb-0">إجمالي الأجهزة</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-check-circle fa-3x mb-2"></i>
+                <h4>
+                    {% for status in report_data.devices_by_status %}
+                        {% if status.حالة_الجهاز == 'جيد' %}{{ status.count }}{% endif %}
+                    {% else %}0{% endfor %}
+                </h4>
+                <p class="mb-0">أجهزة سليمة</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-tools fa-3x mb-2"></i>
+                <h4>
+                    {% for status in report_data.devices_by_status %}
+                        {% if status.حالة_الجهاز == 'صيانة' %}{{ status.count }}{% endif %}
+                    {% else %}0{% endfor %}
+                </h4>
+                <p class="mb-0">قيد الصيانة</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-exclamation-triangle fa-3x mb-2"></i>
+                <h4>
+                    {% for status in report_data.devices_by_status %}
+                        {% if status.حالة_الجهاز == 'معطل' %}{{ status.count }}{% endif %}
+                    {% else %}0{% endfor %}
+                </h4>
+                <p class="mb-0">أجهزة معطلة</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- الرسوم البيانية -->
+<div class="row">
+    <!-- الأجهزة حسب الحالة -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-pie"></i> الأجهزة حسب الحالة</h5>
+            </div>
+            <div class="card-body">
+                {% if report_data.devices_by_status %}
+                <canvas id="statusChart" width="400" height="300"></canvas>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">لا توجد بيانات لعرضها</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- الأجهزة حسب النوع -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-bar"></i> الأجهزة حسب النوع</h5>
+            </div>
+            <div class="card-body">
+                {% if report_data.devices_by_type %}
+                <canvas id="typeChart" width="400" height="300"></canvas>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">لا توجد بيانات لعرضها</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- الأجهزة حسب الوحدة -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-building"></i> الأجهزة حسب الوحدة</h5>
+            </div>
+            <div class="card-body">
+                {% if report_data.devices_by_unit %}
+                <canvas id="unitChart" width="400" height="300"></canvas>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-building fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">لا توجد بيانات لعرضها</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- الإضافات الشهرية -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-line"></i> الإضافات في آخر 30 يوم</h5>
+            </div>
+            <div class="card-body">
+                {% if report_data.monthly_additions %}
+                <canvas id="monthlyChart" width="400" height="300"></canvas>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">لا توجد بيانات لعرضها</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- جداول التفاصيل -->
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-list"></i> تفاصيل الأجهزة حسب النوع</h5>
+            </div>
+            <div class="card-body">
+                {% if report_data.devices_by_type %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>نوع الجهاز</th>
+                                <th>العدد</th>
+                                <th>النسبة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set total_devices = report_data.devices_by_type | sum(attribute='count') %}
+                            {% for item in report_data.devices_by_type %}
+                            <tr>
+                                <td>{{ item['نوع_الجهاز'] }}</td>
+                                <td><span class="badge bg-primary">{{ item['count'] }}</span></td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar" role="progressbar" 
+                                             style="width: {{ (item['count'] / total_devices * 100) | round(1) }}%">
+                                            {{ (item['count'] / total_devices * 100) | round(1) }}%
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center">لا توجد بيانات</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-building"></i> تفاصيل الأجهزة حسب الوحدة</h5>
+            </div>
+            <div class="card-body">
+                {% if report_data.devices_by_unit %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>الوحدة</th>
+                                <th>العدد</th>
+                                <th>النسبة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set total_devices = report_data.devices_by_unit | sum(attribute='count') %}
+                            {% for item in report_data.devices_by_unit %}
+                            <tr>
+                                <td>{{ item['الجهة_المستلمة'] }}</td>
+                                <td><span class="badge bg-info">{{ item['count'] }}</span></td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-info" role="progressbar" 
+                                             style="width: {{ (item['count'] / total_devices * 100) | round(1) }}%">
+                                            {{ (item['count'] / total_devices * 100) | round(1) }}%
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center">لا توجد بيانات</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // بيانات الأجهزة حسب الحالة
+    {% if report_data.devices_by_status %}
+    const statusData = {{ report_data.devices_by_status | tojson }};
+    const statusLabels = statusData.map(item => item['حالة_الجهاز']);
+    const statusValues = statusData.map(item => item.count);
+    const statusColors = statusLabels.map(label => {
+        switch(label) {
+            case 'جيد': return '#28a745';
+            case 'معطل': return '#dc3545';
+            case 'صيانة': return '#ffc107';
+            case 'مفقود': return '#6c757d';
+            default: return '#007bff';
+        }
+    });
+    
+    const statusChart = new Chart(document.getElementById('statusChart'), {
+        type: 'doughnut',
+        data: {
+            labels: statusLabels,
+            datasets: [{
+                data: statusValues,
+                backgroundColor: statusColors,
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+    {% endif %}
+    
+    // بيانات الأجهزة حسب النوع
+    {% if report_data.devices_by_type %}
+    const typeData = {{ report_data.devices_by_type | tojson }};
+    const typeLabels = typeData.map(item => item['نوع_الجهاز']);
+    const typeValues = typeData.map(item => item.count);
+    
+    const typeChart = new Chart(document.getElementById('typeChart'), {
+        type: 'bar',
+        data: {
+            labels: typeLabels,
+            datasets: [{
+                label: 'عدد الأجهزة',
+                data: typeValues,
+                backgroundColor: '#007bff',
+                borderColor: '#0056b3',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+    {% endif %}
+    
+    // بيانات الأجهزة حسب الوحدة
+    {% if report_data.devices_by_unit %}
+    const unitData = {{ report_data.devices_by_unit | tojson }};
+    const unitLabels = unitData.map(item => item['الجهة_المستلمة']);
+    const unitValues = unitData.map(item => item.count);
+    
+    const unitChart = new Chart(document.getElementById('unitChart'), {
+        type: 'horizontalBar',
+        data: {
+            labels: unitLabels,
+            datasets: [{
+                label: 'عدد الأجهزة',
+                data: unitValues,
+                backgroundColor: '#17a2b8',
+                borderColor: '#117a8b',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+    {% endif %}
+    
+    // بيانات الإضافات الشهرية
+    {% if report_data.monthly_additions %}
+    const monthlyData = {{ report_data.monthly_additions | tojson }};
+    const monthlyLabels = monthlyData.map(item => {
+        const date = new Date(item.date);
+        return date.toLocaleDateString('ar-EG');
+    });
+    const monthlyValues = monthlyData.map(item => item.count);
+    
+    const monthlyChart = new Chart(document.getElementById('monthlyChart'), {
+        type: 'line',
+        data: {
+            labels: monthlyLabels,
+            datasets: [{
+                label: 'الأجهزة المضافة',
+                data: monthlyValues,
+                backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                borderColor: '#28a745',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+    {% endif %}
+});
+</script>
+{% endblock %}

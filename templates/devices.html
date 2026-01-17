@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}إدارة الأجهزة - نظام إدارة الأجهزة العسكرية{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="fas fa-desktop"></i>
+                إدارة الأجهزة
+            </h2>
+            {% if permissions | selectattr('اسم_الصلاحية', 'equalto', 'إدارة_الأجهزة') | list %}
+            <a href="{{ url_for('add_device') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i>
+                إضافة جهاز جديد
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-6">
+                        <label for="search" class="form-label">البحث</label>
+                        <input type="text" class="form-control" id="search" name="search" 
+                               value="{{ search }}" placeholder="رقم الجهاز، النوع، أو اسم المستلم">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="status" class="form-label">حالة الجهاز</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="">جميع الحالات</option>
+                            <option value="جيد" {{ 'selected' if status_filter == 'جيد' }}>جيد</option>
+                            <option value="معطل" {{ 'selected' if status_filter == 'معطل' }}>معطل</option>
+                            <option value="صيانة" {{ 'selected' if status_filter == 'صيانة' }}>صيانة</option>
+                            <option value="مفقود" {{ 'selected' if status_filter == 'مفقود' }}>مفقود</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search"></i>
+                                بحث
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Devices Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>قائمة الأجهزة ({{ devices | length }} جهاز)</h5>
+                <div class="btn-group" role="group">
+                    {% if permissions | selectattr('اسم_الصلاحية', 'equalto', 'تصدير_البيانات') | list %}
+                    <a href="{{ url_for('export_devices') }}" class="btn btn-success btn-sm">
+                        <i class="fas fa-file-excel"></i>
+                        تصدير كل الأجهزة
+                    </a>
+                    {% if search or status_filter %}
+                    <a href="{{ url_for('export_devices_filtered', 
+                        search=search, 
+                        status=status_filter, 
+                        device_type=request.args.get('device_type', ''),
+                        unit=request.args.get('unit', ''),
+                        date_from=request.args.get('date_from', ''),
+                        date_to=request.args.get('date_to', '')) }}" 
+                       class="btn btn-warning btn-sm">
+                        <i class="fas fa-filter"></i>
+                        تصدير المفلتر
+                    </a>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                {% if devices %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>رقم الجهاز</th>
+                                <th>نوع الجهاز</th>
+                                <th>الحالة</th>
+                                <th>اسم المستلم</th>
+                                <th>الجهة المستلمة</th>
+                                <th>تاريخ الاستلام</th>
+                                <th>مدخل البيانات</th>
+                                {% if permissions | selectattr('اسم_الصلاحية', 'equalto', 'إدارة_الأجهزة') | list %}
+                                <th>الإجراءات</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for device in devices %}
+                            <tr>
+                                <td>
+                                    <strong>{{ device['رقم_الجهاز'] }}</strong>
+                                    {% if device['اسم_الجهاز'] %}
+                                    <br><small class="text-muted">{{ device['اسم_الجهاز'] }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>{{ device['نوع_الجهاز'] }}</td>
+                                <td>
+                                    {% if device['حالة_الجهاز'] == 'جيد' %}
+                                        <span class="badge bg-success">{{ device['حالة_الجهاز'] }}</span>
+                                    {% elif device['حالة_الجهاز'] == 'معطل' %}
+                                        <span class="badge bg-danger">{{ device['حالة_الجهاز'] }}</span>
+                                    {% elif device['حالة_الجهاز'] == 'صيانة' %}
+                                        <span class="badge bg-warning">{{ device['حالة_الجهاز'] }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ device['حالة_الجهاز'] }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ device['اسم_المستلم'] }}</td>
+                                <td>{{ device['الجهة_المستلمة'] }}</td>
+                                <td>{{ device['تاريخ_الاستلام'] }}</td>
+                                <td>{{ device['مدخل_البيانات'] }}</td>
+                                {% if permissions | selectattr('اسم_الصلاحية', 'equalto', 'إدارة_الأجهزة') | list %}
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ url_for('edit_device', device_id=device['معرف_فريد']) }}" 
+                                           class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{{ url_for('delete_device', device_id=device['معرف_فريد']) }}" 
+                                           class="btn btn-outline-danger btn-sm"
+                                           onclick="return confirm('هل أنت متأكد من حذف هذا الجهاز؟')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">لا توجد أجهزة</h5>
+                    <p class="text-muted">لم يتم العثور على أي أجهزة بناءً على معايير البحث المحددة</p>
+                    {% if permissions | selectattr('اسم_الصلاحية', 'equalto', 'إدارة_الأجهزة') | list %}
+                    <a href="{{ url_for('add_device') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i>
+                        إضافة أول جهاز
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

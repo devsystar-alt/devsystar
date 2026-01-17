@@ -1,0 +1,119 @@
+
+            conn = sqlite3.connect(self.db_name)
+            conn.execute("PRAGMA foreign_keys = ON")
+            conn.row_factory = sqlite3.Row  # للحصول على نتائج كـ dictionaries
+            return conn
+        except Error as e:
+            print(f"خطأ في الاتصال بقاعدة البيانات: {e}")
+            return None
+    
+    def create_tables(self):
+        """إنشاء الجداول الأساسية"""
+        tables = [
+            # جدول الصلاحيات
+            """
+            CREATE TABLE IF NOT EXISTS الصلاحيات (
+                معرف_الصلاحية INTEGER PRIMARY KEY AUTOINCREMENT,
+                اسم_الصلاحية TEXT NOT NULL UNIQUE,
+                وصف_الصلاحية TEXT,
+                مفعل INTEGER DEFAULT 1
+            )
+            """,
+            
+            # جدول المستخدمين (محدث)
+            """
+            CREATE TABLE IF NOT EXISTS المستخدمين (
+                معرف_المستخدم INTEGER PRIMARY KEY AUTOINCREMENT,
+                اسم_المستخدم TEXT NOT NULL UNIQUE,
+                كلمة_المرور TEXT NOT NULL,
+                الاسم_الكامل TEXT NOT NULL,
+                البريد_الإلكتروني TEXT UNIQUE,
+                رقم_الهاتف TEXT,
+                الوحدة_العسكرية TEXT,
+                مفعل INTEGER DEFAULT 1,
+                آخر_تسجيل_دخول TEXT,
+                تاريخ_انتهاء_الحساب TEXT,
+                تاريخ_التسجيل TEXT DEFAULT CURRENT_TIMESTAMP,
+                ملاحظات TEXT
+            )
+            """,
+            
+            # جدول تخصيص الصلاحيات
+            """
+            CREATE TABLE IF NOT EXISTS تخصيص_الصلاحيات (
+                معرف_التخصيص INTEGER PRIMARY KEY AUTOINCREMENT,
+                معرف_المستخدم INTEGER NOT NULL,
+                معرف_الصلاحية INTEGER NOT NULL,
+                تاريخ_المنح TEXT DEFAULT CURRENT_TIMESTAMP,
+                منح_بواسطة INTEGER,
+                FOREIGN KEY (معرف_المستخدم) REFERENCES المستخدمين(معرف_المستخدم) ON DELETE CASCADE,
+                FOREIGN KEY (معرف_الصلاحية) REFERENCES الصلاحيات(معرف_الصلاحية) ON DELETE CASCADE,
+                FOREIGN KEY (منح_بواسطة) REFERENCES المستخدمين(معرف_المستخدم),
+                UNIQUE (معرف_المستخدم, معرف_الصلاحية)
+            )
+            """,
+            
+            # جدول الأجهزة (محدث)
+            """
+            CREATE TABLE IF NOT EXISTS الأجهزة (
+                معرف_فريد INTEGER PRIMARY KEY AUTOINCREMENT,
+                رقم_الجهاز TEXT NOT NULL UNIQUE,
+                نوع_الجهاز TEXT NOT NULL,
+                حالة_الجهاز TEXT CHECK (حالة_الجهاز IN ('جيد', 'معطل', 'صيانة', 'مفقود')),
+                الشهر TEXT,
+                F TEXT NOT NULL , 
+                S  TEXT NOT NULL , 
+                K TEXT NOT NULL  , 
+                هوائي INTEGER DEFAULT 0,
+                شاحن INTEGER DEFAULT 0,
+                قاعدة_شحن INTEGER DEFAULT 0,
+                بطارية INTEGER DEFAULT 0,
+                كبل INTEGER DEFAULT 0,
+                سماعة INTEGER DEFAULT 0,
+                اسم_الجهاز TEXT,
+                اسم_المستلم TEXT NOT NULL,
+                تاريخ_الاستلام TEXT NOT NULL,
+                الجهة_المستلمة TEXT NOT NULL,
+                ملاحظات TEXT,
+                الاحتياجات TEXT,
+                أخرى TEXT,
+                تاريخ_الصيانة TEXT,
+                مستخدم_الإدخال INTEGER NOT NULL,
+                تاريخ_الإدخال TEXT DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (مستخدم_الإدخال) REFERENCES المستخدمين(معرف_المستخدم)
+            )
+            """,
+            
+            # جدول سجل الأنشطة (محدث)
+            """
+            CREATE TABLE IF NOT EXISTS سجل_الأنشطة (
+                معرف_السجل INTEGER PRIMARY KEY AUTOINCREMENT,
+                معرف_المستخدم INTEGER NOT NULL,
+                نوع_النشاط TEXT NOT NULL,
+                الجدول_المستهدف TEXT,
+                معرف_السجل_المستهدف INTEGER,
+                التفاصيل TEXT,
+                العنوان TEXT,
+                عنوان_IP TEXT,
+                المتصفح TEXT,
+                التاريخ TEXT DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (معرف_المستخدم) REFERENCES المستخدمين(معرف_المستخدم)
+            )
+            """,
+            
+            # جدول جلسات المستخدمين (تم إصلاح الخطأ الإملائي هنا)
+            """
+            CREATE TABLE IF NOT EXISTS جلسات_المستخدمين (
+                معرف_الجلسة TEXT PRIMARY KEY,
+                معرف_المستخدم INTEGER NOT NULL,
+                رمز_الجلسة TEXT NOT NULL,
+                عنوان_IP TEXT NOT NULL,
+                المتصفح TEXT,
+                تاريخ_الإنشاء TEXT DEFAULT CURRENT_TIMESTAMP,
+                تاريخ_انتهاء_الصلاحية TEXT NOT NULL,
+                مفعل INTEGER DEFAULT 1,
+                FOREIGN KEY (معرف_المستخدم) REFERENCES المستخدمين(معرف_المستخدم)
+            )
+            """
+        ]
+        
