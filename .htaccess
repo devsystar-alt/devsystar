@@ -1,0 +1,53 @@
+# حماية ملفات الإعدادات
+<Files "config.php">
+    Order Allow,Deny
+    Deny from all
+</Files>
+
+<Files "database.php">
+    Order Allow,Deny  
+    Deny from all
+</Files>
+
+# منع الوصول للملفات الاحتياطية
+<Files "*.sql">
+    Order Allow,Deny
+    Deny from all
+</Files>
+
+# منع الوصول لملفات المطور
+<Files "*.md">
+    Order Allow,Deny
+    Deny from all
+</Files>
+
+# تمكين ضغط الملفات
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript application/x-javascript text/xml application/xml application/xml+rss text/plain
+</IfModule>
+
+# تخزين مؤقت للملفات الثابتة
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/ico "access plus 1 year"
+</IfModule>
+
+# منع عرض قوائم المجلدات
+Options -Indexes
+
+# تحسين الأمان
+ServerSignature Off
+
+# إعادة التوجيه لصفحة تسجيل الدخول إذا لم يكن مسجلاً
+DirectoryIndex index.php login.php
+
+# تشغيل URL Rewriting لجعل الروابط أجمل (اختياري)
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
